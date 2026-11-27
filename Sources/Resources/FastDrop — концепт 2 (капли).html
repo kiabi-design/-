@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FastDrop — концепт 2 (капли)</title>
+<style>
+:root{--bg:#e9f1ec;--bg2:#d7dfdb;--fg:#0b0b12;--sub:rgba(60,60,67,.62);--acc:#30d158;--red:#ff453a;--g1:rgba(255,255,255,.66);--g2:rgba(255,255,255,.26);--edge:rgba(255,255,255,.9);--sh:rgba(30,80,45,.2);color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#07120c;--bg2:#000;--fg:#fff;--sub:rgba(235,235,245,.6);--g1:rgba(255,255,255,.17);--g2:rgba(255,255,255,.05);--edge:rgba(255,255,255,.36);--sh:rgba(0,0,0,.55);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#07120c;--bg2:#000;--fg:#fff;--sub:rgba(235,235,245,.6);--g1:rgba(255,255,255,.17);--g2:rgba(255,255,255,.05);--edge:rgba(255,255,255,.36);--sh:rgba(0,0,0,.55);color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+body{margin:0;height:100%;background:var(--bg2);color:var(--fg);font:15px/1.3 -apple-system,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+button,input{font:inherit;color:inherit;border:0;background:none;outline:0}button{cursor:pointer}
+#app{position:fixed;top:0;bottom:0;left:0;right:0;max-width:460px;margin:0 auto;overflow:hidden}
+.bg{position:absolute;inset:0;background:radial-gradient(120% 70% at 0% 0%,rgba(48,209,88,.34),transparent 60%),radial-gradient(110% 70% at 100% 100%,rgba(20,190,200,.28),transparent 60%),radial-gradient(70% 50% at 100% 40%,rgba(60,120,255,.16),transparent 70%),var(--bg)}
+.glass{position:relative;isolation:isolate;background:linear-gradient(150deg,var(--g1),var(--g2));-webkit-backdrop-filter:blur(22px) saturate(1.8);backdrop-filter:blur(22px) saturate(1.8);border:.5px solid var(--edge);box-shadow:inset 0 1px 1px var(--edge),0 10px 30px var(--sh);transition:transform .3s cubic-bezier(.3,1.6,.5,1)}
+.glass::after{content:"";position:absolute;inset:0;border-radius:inherit;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.4),transparent 45%);opacity:.5}
+.press:active{transform:scale(.93)}
+.ib{width:44px;height:44px;border-radius:50%;display:grid;place-items:center}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.pill{border-radius:99px;padding:9px 15px;font-size:13px;font-weight:600;display:inline-flex;gap:7px;align-items:center}
+#ui{position:absolute;inset:0;padding:calc(env(safe-area-inset-top,0px) + 8px) 16px calc(env(safe-area-inset-bottom,0px) + 176px);display:flex;flex-direction:column;gap:12px;z-index:1}
+.hd{display:flex;justify-content:space-between;align-items:center}
+.ttl{text-align:center;line-height:1.1}.ttl b{display:block;font:700 21px ui-rounded,"SF Pro Rounded",-apple-system,system-ui,sans-serif}
+.ttl em{font:700 9px/1 -apple-system,system-ui,sans-serif;letter-spacing:.14em;color:var(--acc)}
+.info{display:flex;gap:8px;justify-content:center}.mono{font-family:ui-monospace,"SF Mono",Menlo,monospace}
+#rx.on{background:linear-gradient(150deg,rgba(48,209,88,.5),rgba(48,209,88,.18))}
+#stage{flex:1;min-height:150px;position:relative}
+#stage .empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font-weight:600;transition:opacity .3s}
+#stage .empty .ib{width:92px;height:92px;background:linear-gradient(150deg,rgba(48,209,88,.5),rgba(48,209,88,.15))}
+#stage .empty small{font-weight:400;color:var(--sub);font-size:13px;margin-top:-8px}
+#stage .row{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:center;opacity:0;pointer-events:none;transition:opacity .3s}
+#stage.has .empty{opacity:0;pointer-events:none}#stage.has .row{opacity:1;pointer-events:auto}
+#tip{position:absolute;left:50%;top:0;transform:translate(-50%,-8px);opacity:0;transition:.3s;white-space:nowrap}#tip.on{opacity:1;transform:translate(-50%,0)}
+.card{border-radius:30px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.cap{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--sub)}
+.r2{display:flex;justify-content:space-between;align-items:center}
+.dot{font-size:12px;font-weight:600;color:var(--acc);display:flex;align-items:center;gap:5px}.dot i{width:6px;height:6px;border-radius:50%;background:var(--acc);animation:bl 1.6s infinite}
+@keyframes bl{50%{opacity:.3}}
+.peers{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px}.peers::-webkit-scrollbar{display:none}
+.chip{flex:none;display:flex;gap:9px;align-items:center;text-align:left;padding:8px 14px 8px 10px;border-radius:99px;background:rgba(127,127,127,.14);border:1.5px solid transparent;transition:.25s}
+.chip.on{background:rgba(48,209,88,.28);border-color:var(--acc)}.chip span{font-size:22px}.chip b{display:block;font-size:13px}.chip small{font-size:11px;color:var(--sub)}
+.ipf{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:99px;background:rgba(127,127,127,.14);color:var(--sub)}
+.ipf input{flex:1;min-width:0;color:var(--fg);font-size:16px}.ipf.bad{box-shadow:0 0 0 1.5px var(--red)}
+#goo{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none}
+#core{display:none}
+#core{width:50px;height:50px;transform:scale(0)}
+#fx{position:absolute;inset:0;z-index:4;pointer-events:none}
+.fb{position:absolute;left:0;top:0;border-radius:50%;pointer-events:auto;will-change:transform}.busy .fb{pointer-events:none}
+.pr{position:absolute;left:50%;top:50%;width:160%;height:160%;transform:translate(-50%,-50%) rotate(-90deg) scale(.6);opacity:0;transition:.35s cubic-bezier(.3,1.5,.5,1);overflow:visible}.pr.on{opacity:1;transform:translate(-50%,-50%) rotate(-90deg) scale(1)}.pr circle{fill:none;stroke-width:5;stroke-linecap:round}.pr .t{stroke:rgba(255,255,255,.2)}.pr .c{stroke:#7dffa0;stroke-dasharray:289;filter:drop-shadow(0 0 4px #30d158)}
+.fb .ic{position:absolute;inset:0;display:grid;place-items:center}.rw{position:absolute;inset:0}
+.rg{position:absolute;inset:0;border-radius:50%;border:2px solid var(--acc);animation:rip 1.8s ease-out infinite}
+@keyframes rip{0%{transform:scale(1.05);opacity:.55}100%{transform:scale(1.75);opacity:0}}
+#send{position:absolute;left:calc(50% - 42px);bottom:calc(env(safe-area-inset-bottom,0px) + 58px);width:84px;height:84px;z-index:4;touch-action:none;cursor:grab}
+#send .rip{position:absolute;inset:0;border-radius:50%;border:2px solid var(--acc);animation:rip 1.9s ease-out infinite}
+.busy #send .rip,#send.off .rip{display:none}
+#sbi{position:absolute;inset:0;border-radius:50%;display:grid;place-items:center;color:#fff;background:linear-gradient(150deg,rgba(48,209,88,.82),rgba(20,160,60,.45))}
+#sbi svg{width:32px;height:32px;transform:rotate(-8deg)}
+#hint{position:absolute;left:0;right:0;text-align:center;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);font-size:13px;font-weight:500;color:var(--sub);z-index:4;pointer-events:none}
+#chev{position:absolute;left:calc(50% - 11px);bottom:calc(env(safe-area-inset-bottom,0px) + 148px);width:22px;color:var(--sub);z-index:4;pointer-events:none;animation:ch 1.5s ease-in-out infinite}
+@keyframes ch{50%{transform:translateY(-6px);opacity:.4}}
+#toast{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 62px);transform:translate(-50%,-14px);opacity:0;transition:.35s cubic-bezier(.3,1.4,.5,1);z-index:9;white-space:nowrap;pointer-events:none}#toast.on{opacity:1;transform:translate(-50%,0)}
+.dk{--fg:#fff;--sub:rgba(235,235,245,.62);--g1:rgba(255,255,255,.17);--g2:rgba(255,255,255,.05);--edge:rgba(255,255,255,.34);--sh:rgba(0,0,0,.55);color:#fff}
+#xf{position:absolute;inset:0;z-index:2;opacity:0;pointer-events:none;transition:opacity .6s}#xf.on{opacity:1}
+#xf .bg{background:radial-gradient(55% 38% at 50% 50%,rgba(20,90,55,.65),transparent 72%),#03060a}
+#disk{position:absolute;left:50%;top:50%;width:360px;height:360px;margin:-180px;border-radius:50%;background:conic-gradient(transparent,rgba(48,209,88,.9) 12%,transparent 30%,rgba(90,200,255,.65) 55%,transparent 75%,rgba(48,209,88,.5) 90%,transparent);-webkit-mask:radial-gradient(circle,transparent 44%,#000 49%,#000 60%,transparent 67%);mask:radial-gradient(circle,transparent 44%,#000 49%,#000 60%,transparent 67%);filter:blur(3px);animation:sp 5s linear infinite;opacity:.8}
+@keyframes sp{to{transform:rotate(360deg)}}
+#void{position:absolute;left:0;top:0;width:200px;height:200px;border-radius:50%;z-index:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;opacity:0;background:radial-gradient(circle at 50% 45%,rgba(0,0,0,.93) 0 55%,rgba(0,0,0,.55) 78%,transparent 100%)}
+#void b{font:700 40px ui-rounded,"SF Pro Rounded",-apple-system,system-ui,sans-serif}#void small{font-size:12px;font-weight:600;opacity:.85}
+.ck{width:54px;height:54px;fill:none;stroke:#7dffa0;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:30;animation:dr .6s ease-out}@keyframes dr{from{stroke-dashoffset:30}}
+.rpl{position:absolute;left:0;top:0;width:100px;height:100px;border-radius:50%;border:2px solid #7dffa0;pointer-events:none;animation:rp .9s ease-out forwards}@keyframes rp{from{transform:translate(var(--x),var(--y)) scale(.8);opacity:.9}to{transform:translate(var(--x),var(--y)) scale(3.2);opacity:0}}
+#xc{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 12px) 20px calc(env(safe-area-inset-bottom,0px) + 16px);opacity:0;pointer-events:none;transition:opacity .5s}#xc.on{opacity:1}#xc.on button{pointer-events:auto}
+.bt{display:flex;flex-direction:column;gap:12px;text-align:center}
+#fname{margin:0;font-size:17px;font-weight:600}#stat{margin:0;font-size:14px;color:var(--sub)}#stat.ok{color:#7dffa0}
+.stats{display:flex;border-radius:28px;padding:14px 4px}.stats>div{flex:1;text-align:center}.stats>div+div{border-left:1px solid rgba(127,127,127,.25)}
+.stats small{display:block;font-size:11px;font-weight:600;color:var(--sub)}.stats b{font-size:16px;font-variant-numeric:tabular-nums}
+.acts{display:flex;gap:12px}.btn{flex:1;padding:17px;border-radius:99px;font-size:17px;font-weight:600}.btn.red{color:#ff6b62}
+.btn.pro{background:linear-gradient(150deg,rgba(48,209,88,.95),rgba(20,160,60,.7));color:#fff}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><filter id="dropf" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceGraphic" stdDeviation="8" result="b"/><feColorMatrix in="b" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -10" result="a"/><feOffset in="a" dx="3" dy="4" result="o1"/><feComposite in="a" in2="o1" operator="out" result="hi"/><feColorMatrix in="hi" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .85 0" result="hiw"/><feOffset in="a" dx="-3" dy="-4" result="o2"/><feComposite in="a" in2="o2" operator="out" result="lo"/><feColorMatrix in="lo" values="0 0 0 0 .5  0 0 0 0 1  0 0 0 0 .6  0 0 0 .85 0" result="low"/><feComponentTransfer in="a" result="body"><feFuncA type="linear" slope=".42"/></feComponentTransfer><feMerge><feMergeNode in="body"/><feMergeNode in="low"/><feMergeNode in="hiw"/></feMerge></filter></defs></svg>
+
+<main id="app">
+  <div class="bg"></div>
+  <div id="ui">
+    <header class="hd">
+      <button class="glass ib press" id="bHist" aria-label="История"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
+      <div class="ttl"><b>FastDrop</b><em>BETA</em></div>
+      <button class="glass ib press" id="bSet" aria-label="Сменить тему"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button>
+    </header>
+    <div class="info">
+      <span class="glass pill mono"><svg class="i" style="width:16px;height:16px" viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19" r=".6"/></svg>192.168.0.24</span>
+      <button class="glass pill press on" id="rx">↓ Приём вкл.</button>
+    </div>
+    <div id="stage">
+      <div id="tip" class="glass pill"></div>
+      <button class="empty" id="add"><span class="glass ib press"><svg class="i" style="width:36px;height:36px;stroke-width:1.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>Добавить файлы<small>или перетащите их сюда</small></button>
+      <div class="row"><span class="glass pill" id="sum"></span><button class="glass ib press" id="add2" aria-label="Добавить файл"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>
+    </div>
+    <section class="glass card">
+      <div class="r2"><span class="cap">Получатель</span><span class="dot"><i></i>Готов</span></div>
+      <div class="peers" id="peers"></div>
+      <label class="ipf" id="ipf"><svg class="i" style="width:18px;height:18px" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg><input id="ip" class="mono" inputmode="decimal" placeholder="192.168.0.14" autocomplete="off"></label>
+    </section>
+  </div>
+  <div id="xf" class="dk"><div class="bg"></div><i id="disk"></i></div>
+  <canvas id="goo"></canvas><i id="core"></i>
+  <div id="fx"><div id="void"><b id="vp">0%</b><small id="vs"></small></div></div>
+  <svg id="chev" class="i" viewBox="0 0 24 24"><path d="M6 14l6-6 6 6"/></svg>
+  <div id="hint"></div>
+  <div id="send"><i class="rip"></i><div id="sbi" class="glass"><svg class="i" viewBox="0 0 24 24" style="stroke-width:1.8"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg></div></div>
+  <div id="toast" class="glass pill"></div>
+  <div id="xc" class="dk">
+    <div class="r2"><span class="glass pill" id="xChip">Отправка</span><button class="glass ib press" id="xClose" aria-label="Закрыть">✕</button></div>
+    <div class="bt"><h2 id="fname"></h2><p id="stat"></p>
+      <div class="glass stats"><div><small id="l1"></small><b id="v1"></b></div><div><small id="l2"></small><b id="v2"></b></div><div><small id="l3"></small><b id="v3"></b></div></div>
+      <div class="acts" id="acts"></div></div>
+  </div>
+</main>
+
+
+<script>
+(()=>{
+const $=s=>document.querySelector(s),cl=(v,a,b)=>Math.min(b,Math.max(a,v));
+const ss=(a,b,x)=>{x=cl((x-a)/(b-a),0,1);return x*x*(3-2*x)};
+const eob=x=>{const c=1.70158;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const eoe=x=>x<=0?0:x>=1?1:Math.pow(2,-10*x)*Math.sin((x*10-.75)*2.0944)+1;
+const GS=1,app=$('#app'),gooL=$('#goo'),fxL=$('#fx'),stage=$('#stage'),send=$('#send'),sbi=$('#sbi'),core=$('#core'),ui=$('#ui'),ip=$('#ip'),hint=$('#hint'),chev=$('#chev'),xf=$('#xf'),xc=$('#xc'),vd=$('#void');
+const buzz=m=>{try{navigator.vibrate&&navigator.vibrate(m)}catch(e){}};
+const SPECS=[['Отпуск.heic','🖼',4.2],['Договор.pdf','📄',1.3],['Клип.mov','🎬',842],['Трек.flac','🎵',31],['Архив.zip','📦',268],['Заметки.txt','📝',.02],['Слайды.key','📊',96]];
+const PEERS=[['Ivan’s MacBook','192.168.0.14','💻'],['Pixel 9','192.168.0.31','📱'],['Офис-ПК','192.168.0.52','🖥']];
+const fmt=mb=>(mb<1?Math.round(mb*1024)+' КБ':mb<1024?mb.toFixed(1)+' МБ':(mb/1024).toFixed(2)+' ГБ').replace('.',',');
+const pl=n=>n%10==1&&n%100!=11?'файл':[2,3,4].includes(n%10)&&![12,13,14].includes(n%100)?'файла':'файлов';
+const Q=2;let drops=[],CW=0,CH=0,fld=null,img=null,cctx=null,files=[],ghosts=[],geo={rx:0,ry:0,cx:0,cy:0,W:0,H:0,sx:0,sy:0,sw:0,sh:0},si=0,st=null,half=false,X=null,cr=0,bump=0;
+const drag={x:0,y:0,vx:0,vy:0,tx:0,ty:0,on:false,spring:false,trig:false};
+const okIp=()=>/^(\d{1,3}\.){3}\d{1,3}$/.test(ip.value.trim())&&ip.value.trim().split('.').every(n=>+n<=255);
+const canSend=()=>files.length>0&&okIp();
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),2200)}
+function measure(){const a=app.getBoundingClientRect(),s=stage.getBoundingClientRect(),b=send.getBoundingClientRect();
+ geo={W:a.width,H:a.height,cx:a.width/2,cy:a.height/2,sx:s.left-a.left,sy:s.top-a.top,sw:s.width,sh:s.height,rx:b.left-a.left+b.width/2-drag.x,ry:b.top-a.top+b.height/2-drag.y};const w=Math.ceil(a.width/Q),h=Math.ceil(a.height/Q);if(w>0&&h>0&&(w!==CW||h!==CH)){CW=w;CH=h;gooL.width=w;gooL.height=h;cctx=gooL.getContext('2d');fld=new Float32Array(w*h);img=cctx.createImageData(w,h)}}
+function sync(){const n=files.length;stage.classList.toggle('has',n>0);send.classList.toggle('off',!n);
+ $('#sum').textContent=n+' '+pl(n)+' · '+fmt(files.reduce((a,f)=>a+f.mb,0));
+ $('#ipf').classList.toggle('bad',!!ip.value.trim()&&!okIp());
+ hint.textContent=!n?'Добавьте файлы':!okIp()?'Выберите получателя':'Потяните к центру, чтобы отправить';chev.style.display=canSend()?'':'none';
+ document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.ip===ip.value.trim()))}
+function addFile(){
+ if(files.length>=8){toast('В демо — не больше 8 капель');return}
+ const s=SPECS[si++%SPECS.length],r=26+16*cl((Math.log10(s[2]*1e6)-3)/6,0,1);let best=[.5,.5],bd=-1;
+ for(let i=0;i<28;i++){const c=[.14+Math.random()*.72,.16+Math.random()*.68],d=Math.min(1,...files.map(f=>Math.hypot(f.hx-c[0],(f.hy-c[1])*.8)));if(d>bd){bd=d;best=c}}
+ const g=document.createElement('div'),fb=document.createElement('div');g.className='gb';fb.className='fb';
+ fb.style.width=fb.style.height=2*r+'px';
+ fb.innerHTML='<div class="rw"><i class="rg"></i></div><svg class="pr" viewBox="0 0 100 100"><circle class="t" cx="50" cy="50" r="46"/><circle class="c" cx="50" cy="50" r="46" stroke-dashoffset="289"/></svg><span class="ic"></span>';
+ const ic=fb.querySelector('.ic');ic.textContent=s[1];ic.style.fontSize=r*.9+'px';fb.querySelector('.rg').style.animationDelay=-Math.random()*1.8+'s';
+ fxL.appendChild(fb);
+ const f={name:s[0],mb:s[2],r,hx:best[0],hy:best[1],ph:Math.random()*6.283,t0:performance.now()/1000,g,fb,rw:fb.firstChild,ic,prs:fb.querySelector('.pr'),arc:fb.querySelector('.c'),vx:0,vy:0,st:'idle',pr:0,dur:1.2+1.4*(r-26)/16};
+ let tm,lg=false;fb.addEventListener('pointerdown',()=>{lg=false;tm=setTimeout(()=>{lg=true;rm(f)},600)});
+ ['pointerup','pointerleave','pointercancel'].forEach(e=>fb.addEventListener(e,()=>clearTimeout(tm)));
+ fb.addEventListener('click',()=>{if(lg)return;const t=$('#tip');t.textContent=f.name+' · '+fmt(f.mb);t.classList.add('on');clearTimeout(addFile.h);addFile.h=setTimeout(()=>t.classList.remove('on'),2000)});
+ files.push(f);sync();buzz(8)}
+function rm(f){files=files.filter(x=>x!==f);f.dt=performance.now()/1000;ghosts.push(f);sync();buzz(12)}
+function prog(){const tot=Math.hypot(geo.rx-geo.cx,geo.ry-geo.cy)||1;return cl(1-Math.hypot(geo.rx+drag.x-geo.cx,geo.ry+drag.y-geo.cy)/tot,0,1)}
+/* a drop: translucent goo body (stretches along its velocity) + unscaled fx (icon, rings) */
+function place(f,x,y,k,t,dt,boost){
+ if(f.px===undefined){f.px=x;f.py=y}
+ f.vx+=((x-f.px)/dt-f.vx)*.25;f.vy+=((y-f.py)/dt-f.vy)*.25;f.px=x;f.py=y;
+ const s=cl(Math.hypot(f.vx,f.vy)/1200,0,.55)+boost,a=Math.atan2(f.vy,f.vx);
+ const sx=k*(1+s+.05*Math.sin(t*2.3+f.ph)),sy=k*(1-s*.45+.05*Math.sin(t*2.9+f.ph+1.7));
+ drops.push({x,y,ax:f.r*Math.max(sx,.01),ay:f.r*Math.max(sy,.01),a});
+ f.fb.style.transform='translate('+(x-f.r)+'px,'+(y-f.r)+'px) scale('+Math.max(k,0)+')'}
+function ripple(){const r=document.createElement('i');r.className='rpl';r.style.setProperty('--x',geo.cx-50+'px');r.style.setProperty('--y',geo.cy-50+'px');fxL.appendChild(r);setTimeout(()=>r.remove(),950)}
+function absorb(f){f.st='gone';f.g.remove();f.fb.remove();files=files.filter(x=>x!==f);X.abs++;bump=1;ripple();buzz(16)}
+/* metaball drops drawn on a low-res canvas (no SVG filters: Safari can't apply them to HTML) */
+function renderDrops(){if(!fld)return;fld.fill(0);
+ for(const d of drops){const m=1.9*Math.max(d.ax,d.ay),ca=Math.cos(d.a),sa=Math.sin(d.a);
+  const x0=Math.max(0,Math.floor((d.x-m)/Q)),x1=Math.min(CW-1,Math.ceil((d.x+m)/Q)),y0=Math.max(0,Math.floor((d.y-m)/Q)),y1=Math.min(CH-1,Math.ceil((d.y+m)/Q));
+  for(let j=y0;j<=y1;j++){const py=j*Q-d.y;for(let i=x0;i<=x1;i++){const px=i*Q-d.x,u=(px*ca+py*sa)/d.ax,v=(-px*sa+py*ca)/d.ay,q=(u*u+v*v)/3.61;if(q<1){const w=1-q;fld[j*CW+i]+=w*w*w}}}}
+ const T=.378,o8=img.data;
+ for(let j=0;j<CH;j++)for(let i=0;i<CW;i++){const n=j*CW+i,f=fld[n],o=n*4;
+  if(f<T-.03){o8[o+3]=0;continue}
+  const ins=cl((f-T+.03)/.06,0,1),gx=(fld[n+1]||0)-(fld[n-1]||0),gy=(fld[n+CW]||0)-(fld[n-CW]||0),g=Math.hypot(gx,gy)||1;
+  const nl=(gx+gy)/(g*1.4142),w=1-ss(T,T+.2,f),rim=w*ins,sp=Math.pow(Math.max(0,nl),3)*rim,bk=Math.max(0,-nl)*rim;
+  const a=Math.min(.96,.34*ins+.4*rim+.55*sp+.22*bk),t=Math.min(1,rim*.6+sp);
+  o8[o]=48+187*t;o8[o+1]=209+46*t;o8[o+2]=88+152*t;o8[o+3]=a*255}
+ cctx.putImageData(img,0,0)}
+let last=0;
+function frame(ts){const t=ts/1000,dt=Math.max(.008,Math.min(.033,(t-last)||.016));last=t;
+ if(drag.spring){const k=170,c=16;drag.vx+=(-k*(drag.x-drag.tx)-c*drag.vx)*dt;drag.vy+=(-k*(drag.y-drag.ty)-c*drag.vy)*dt;drag.x+=drag.vx*dt;drag.y+=drag.vy*dt;
+  if(Math.abs(drag.x-drag.tx)<.3&&Math.abs(drag.y-drag.ty)<.3&&Math.abs(drag.vx)+Math.abs(drag.vy)<2){drag.x=drag.tx;drag.y=drag.ty;drag.vx=drag.vy=0;drag.spring=false}}
+ const sx=geo.rx+drag.x,sy=geo.ry+drag.y,p=prog(),e=ss(.03,1,p),tt=X?t-X.t0:0;
+ drops.length=0;if(X)seq(t,tt);
+ [...files,...ghosts].forEach(f=>{
+  if(f.st==='gone')return;let x,y,k,b=0;
+  if(X&&f.inX){
+   const bp=eoe(cl(tt/1.1,0,1));x=geo.cx+(f.tx-geo.cx)*bp+Math.sin(t*.6+f.ph)*10*bp;y=geo.cy+(f.ty-geo.cy)*bp+Math.cos(t*.5+f.ph*1.3)*10*bp;
+   k=1.25*(1+.06*Math.sin(t*3.2+f.ph))*cl(tt*3,0,1)+0*b;
+   if(f.st==='pull'){const u=cl((t-f.p0)/.95,0,1),q=Math.pow(u,2.2),rho=f.rho0*(1-q),th=f.th0+q*5.2;
+    x=geo.cx+Math.cos(th)*rho;y=geo.cy+Math.sin(th)*rho;k*=Math.max(0,1-.92*Math.pow(u,2.6));b=.55*u;if(u>=1){absorb(f);return}}
+   f.rw.style.opacity=f.st==='idle'||f.st==='wait'?1:0;f.ic.style.opacity=1;
+  }else{
+   const bx=geo.sx+f.hx*geo.sw,by=geo.sy+f.hy*geo.sh,o=11*e;
+   x=(bx+Math.sin(t*.7+f.ph)*8)*(1-e)+sx*e+Math.cos(t*2+f.ph)*o;y=(by+Math.cos(t*.55+f.ph*1.3)*8)*(1-e)+sy*e+Math.sin(t*2+f.ph)*o;
+   if(f.bl){const m=ss(0,1,(t-f.bl)/.7);x=f.bx+(x-f.bx)*m;y=f.by+(y-f.by)*m;if(m>=1)f.bl=0}
+   k=eob(cl((t-f.t0)/.6,0,1))*(1+.08*Math.sin(t*3.6+f.ph))*(1-.12*e);if(f.dt)k*=1-cl((t-f.dt)/.3,0,1);
+   f.rw.style.opacity=1-e;f.ic.style.opacity=f.dt?0:Math.max(0,1-e*1.2)}
+  place(f,x,y,k,t,dt,b)});
+ ghosts=ghosts.filter(f=>{if(t-f.dt>.4){f.g.remove();f.fb.remove();return false}return true});
+ /* core: send-bubble target at home, the black hole in the scene */
+ let cx2=sx,cy2=sy;
+ if(X){cx2=geo.cx;cy2=geo.cy;bump*=.93;cr+=((52+3.5*X.abs)*(1+.03*Math.sin(t*2.4))+bump*12-cr)*.12}
+ else{cr=files.length?38*ss(.5,1,p):0}
+ if(cr>1)drops.push({x:cx2,y:cy2,ax:cr,ay:cr,a:0});renderDrops();
+ const vs=X?cl(tt*2,0,1):0;vd.style.opacity=vs;vd.style.transform='translate('+(geo.cx-100)+'px,'+(geo.cy-100)+'px) scale('+Math.max(cr*.82/100,.01)+')';
+ ui.style.opacity=1-Math.min(1,p*1.8);ui.style.pointerEvents=p>.05?'none':'';
+ const h=ss(.72,1,p);sbi.style.opacity=files.length||X?(canSend()||X?1-h:.55):.45;sbi.style.transform='scale('+(1-.5*h)+')';
+ send.style.transform='translate('+drag.x+'px,'+drag.y+'px) scale('+(drag.on?1.1:1)+')';
+ hint.style.opacity=chev.style.opacity=1-Math.min(1,p*3);app.classList.toggle('busy',drag.on||drag.trig);
+ if(X)ui2(t);requestAnimationFrame(frame)}
+/* ---------- drag to send ---------- */
+send.addEventListener('pointerdown',e=>{if(drag.trig)return;send.setPointerCapture(e.pointerId);measure();st={x:e.clientX,y:e.clientY,ox:drag.x,oy:drag.y};drag.on=true;drag.spring=false;drag.vx=drag.vy=0;buzz(6)});
+send.addEventListener('pointermove',e=>{if(!st||drag.trig)return;const f=canSend()?1:.12;
+ let x=st.ox+(e.clientX-st.x)*f,y=st.oy+(e.clientY-st.y)*f;
+ if(f===1){x=cl(geo.rx+x,40,geo.W-40)-geo.rx;y=cl(geo.ry+y,40,geo.ry+24)-geo.ry}
+ drag.x=x;drag.y=y;if(f===1){const p=prog();if(p>.5&&!half){half=true;buzz(12)}if(p<.4)half=false;if(p>=.96)trigger()}});
+const end=()=>{if(!st)return;st=null;drag.on=false;if(drag.trig)return;
+ if(canSend()&&prog()>=.78)trigger();else{drag.tx=drag.ty=0;drag.spring=true;half=false;if(!canSend())toast(files.length?'Выберите получателя — нужен корректный IP':'Сначала добавьте файлы');buzz(10)}};
+send.addEventListener('pointerup',end);send.addEventListener('pointercancel',end);
+function trigger(){if(drag.trig)return;drag.trig=true;st=null;drag.on=false;drag.tx=geo.cx-geo.rx;drag.ty=geo.cy-geo.ry;drag.spring=true;buzz([20,30,20]);setTimeout(openX,520)}
+/* ---------- send scene: drops burst over the whole screen, rings run one by one, each finished drop is swallowed ---------- */
+function scatter(fl){const pts=[];fl.forEach(f=>{let best=null,bd=-1;
+ for(let i=0;i<70;i++){const c=[48+Math.random()*(geo.W-96),112+Math.random()*(geo.H-112-270)];
+  if(Math.hypot(c[0]-geo.cx,c[1]-geo.cy)<140)continue;const d=Math.min(999,...pts.map(q=>Math.hypot(q[0]-c[0],q[1]-c[1])));if(d>bd){bd=d;best=c}}
+ best=best||[60+pts.length*40,150];pts.push(best);f.tx=best[0];f.ty=best[1]})}
+function acts(){const a=$('#acts');
+ a.innerHTML=X.done?'<button class="glass btn press" id="aMore">+ Ещё</button><button class="glass btn pro press" id="aDone">Готово</button>':'<button class="glass btn red press" id="aCancel">Отменить</button>';
+ const q=id=>$(id);if(q('#aCancel'))q('#aCancel').onclick=()=>closeX();if(q('#aDone'))q('#aDone').onclick=()=>closeX();if(q('#aMore'))q('#aMore').onclick=()=>closeX(true)}
+function openX(){if(!files.length){drag.trig=false;return}
+ measure();const fl=files.slice();fl.forEach(f=>{f.inX=true;f.st='wait';f.pr=0;f.px=undefined});scatter(fl);
+ const W=fl.reduce((a,f)=>a+f.r,0),sc=fl.length>5?.7:1;fl.forEach(f=>f.dur*=sc);
+ X={fl,W,total:fl.reduce((a,f)=>a+f.mb,0),t0:performance.now()/1000,next:0,abs:0,done:false,mn:99,mx:0,sm:0,n:0,td:fl.reduce((a,f)=>a+.35+f.dur+.5,0)};
+ $('#stat').textContent='Отправка на '+ip.value.trim()+'…';$('#stat').className='';
+ $('#l1').textContent='Осталось';$('#l2').textContent='Передано';$('#l3').textContent='Всего';
+ $('#xClose').textContent='✕';acts();xf.classList.add('on');xc.classList.add('on')}
+function seq(t,tt){
+ X.fl.forEach(f=>{if(f.st==='ring'){const a=t-f.s0;f.pr=cl((a-.35)/f.dur,0,1);f.arc.setAttribute('stroke-dashoffset',289*(1-f.pr));
+  if(a>=.35+f.dur+.2){f.st='pull';f.prs.classList.remove('on');f.p0=t;const dx=f.px-geo.cx,dy=f.py-geo.cy;f.rho0=Math.hypot(dx,dy);f.th0=Math.atan2(dy,dx);X.next=t+.45}}});
+ const nx=X.fl.find(f=>f.st==='wait');
+ if(nx&&tt>1.1&&t>=X.next&&!X.fl.some(f=>f.st==='ring')){nx.st='ring';nx.s0=t;nx.prs.classList.add('on')}
+ if(!X.done&&X.fl.every(f=>f.st==='gone'))finish()}
+function ui2(t){
+ const n=X.fl.length,P=X.fl.reduce((a,f)=>a+f.r*(f.st==='pull'||f.st==='gone'?1:f.pr),0)/X.W,sp=18+14*Math.sin(t*1.3)+6*Math.sin(t*3.7);
+ if(X.done)return;
+ X.mn=Math.min(X.mn,sp);X.mx=Math.max(X.mx,sp);X.sm+=sp;X.n++;
+ $('#vp').textContent=Math.round(P*100)+'%';$('#vs').textContent=sp.toFixed(1).replace('.',',')+' МБ/с';
+ const cur=X.fl.find(f=>f.st==='ring')||X.fl.find(f=>f.st==='wait'),i=Math.min(X.abs+1,n);
+ if(cur)$('#fname').textContent=cur.name;$('#xChip').textContent=n>1?i+' из '+n:'Отправка';
+ const s=Math.ceil((1-P)*X.td);$('#v1').textContent=s<60?s+' с':Math.floor(s/60)+':'+String(s%60).padStart(2,'0');$('#v2').textContent=fmt(P*X.total);$('#v3').textContent=fmt(X.total)}
+function finish(){X.done=true;$('#vp').innerHTML='<svg class="ck" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';$('#vs').textContent='';
+ $('#stat').textContent='Все файлы поглощены — отправка завершена';$('#stat').className='ok';$('#xChip').textContent='Готово';$('#fname').textContent=X.fl.length+' '+pl(X.fl.length)+' · '+fmt(X.total);
+ $('#l1').textContent='Средняя';$('#l2').textContent='Макс.';$('#l3').textContent='Мин.';
+ [X.sm/Math.max(X.n,1),X.mx,X.mn].forEach((v,i)=>$('#v'+(i+1)).textContent=v.toFixed(1).replace('.',',')+' МБ/с');
+ $('#xClose').textContent='✓';acts();bump=1.6;ripple();buzz([30,40,30])}
+function closeX(more){const t=performance.now()/1000;
+ files.forEach(f=>{f.inX=false;f.st='idle';f.bl=t;f.bx=f.px;f.by=f.py;f.prs.classList.remove('on')});
+ X=null;xf.classList.remove('on');xc.classList.remove('on');drag.trig=false;drag.tx=drag.ty=0;drag.spring=true;half=false;
+ if(more)setTimeout(addFile,450)}
+$('#xClose').onclick=()=>closeX();
+/* ---------- wiring ---------- */
+$('#add').onclick=$('#add2').onclick=addFile;
+$('#bHist').onclick=()=>toast('История — только дизайн в этом демо');
+$('#bSet').onclick=()=>{const r=document.documentElement,d=(r.dataset.theme||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'))==='dark';r.dataset.theme=d?'light':'dark';toast('Тема: '+(d?'светлая':'тёмная'))};
+$('#rx').onclick=e=>{const b=e.currentTarget;b.classList.toggle('on');b.textContent=b.classList.contains('on')?'↓ Приём вкл.':'↓ Приём выкл.'};
+PEERS.forEach(p=>{const b=document.createElement('button');b.className='chip press';b.dataset.ip=p[1];b.innerHTML='<span>'+p[2]+'</span><div><b>'+p[0]+'</b><small class="mono">'+p[1]+'</small></div>';
+ b.onclick=()=>{ip.value=p[1];sync();buzz(6)};$('#peers').appendChild(b)});
+ip.value=PEERS[0][1];ip.addEventListener('input',sync);
+addEventListener('resize',measure);new ResizeObserver(measure).observe(app);
+sync();measure();requestAnimationFrame(frame);
+setTimeout(()=>{addFile();setTimeout(addFile,350);setTimeout(addFile,700)},500);
+})();
+</script>
+</body>
+</html>
