@@ -1,0 +1,26 @@
+name: FastDropViewer
+options:
+  bundleIdPrefix: com.fastdrop
+  deploymentTarget:
+    iOS: "16.0"
+targets:
+  FastDropViewer:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+        excludes:
+          - Info.plist
+          - Resources
+      - path: Sources/Resources
+        buildPhase: resources
+    settings:
+      base:
+        INFOPLIST_FILE: Sources/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: com.fastdrop.htmlviewer
+        PRODUCT_NAME: FastDropViewer
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_VERSION: "5.0"
